@@ -43,7 +43,7 @@ namespace A_Star
         /// <param name="node">The target node.</param>
         public void CalculateDistanceFirstNode(Node node)
         {
-            //Calculating the distance between this node and the previous node
+            // Calculating the distance between this node and the previous node
             double routeLength = node.DistanceFirstNode + Math.Pow(Math.Pow(X - node.X, 2) + Math.Pow(Y - node.Y, 2), 0.5);
 
             // Update the path for the algorithm if we find a shorter one.
