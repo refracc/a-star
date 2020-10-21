@@ -7,120 +7,137 @@ namespace A_Star
 {
     internal class Program
     {
+        /// <summary>
+        /// The entry point for the program.
+        /// </summary>
+        /// <param name="args">The array of arguments to be parsed in from the command line.</param>
         private static void Main(string[] args)
         {
-            //Creating the list of Nodes
-            List<Node> caverns = new List<Node>();
+            // Creating a list of nodes 
+            List<Node> nodes = new List<Node>();
 
-            //string cavernSource = "generated5000-1.cav";
-            //Extracting the caverns list and connection from the file.
-            string inputFile = args[0] + ".cav";
-            CreateNodeList(inputFile, caverns);
+            // Create a node list from a given file and its associated list of nodes.
+            CreateNodeList((args[0] + ".cav"), nodes);
 
-            //Creating the list of unvisited caverns
-            List<Node> unvisitedNodes = new List<Node> {caverns[0]};
+            // Creating a list of unvisited nodes initialised by the first node in nodes
+            List<Node> unvisitedNodes = new List<Node> { nodes[0] };
 
-            //Adding the first cavern to the unvisited caverns list
+            // Setting the first cavern distance from starting node to 0.
+            unvisitedNodes[0].DistanceFirstNode = 0;
 
-            //Setting the first cavern distance from Start to 0
-            unvisitedNodes[0].G = 0;
-            //Calculating distance of first cavern to Target
-            caverns.First().CalcH(caverns.Last().X, caverns.Last().Y);
+            // Calculating the distance of the first node to the target node.
+            nodes.First().CalculateDistanceTargetNode(nodes.Last().X, nodes.Last().Y);
 
-            int visiting = 0; //Index of visiting cavern
+            // Index of the node being visited.
+            int visiting = 0;
 
-            while (unvisitedNodes.Any() && visiting != caverns.Last().ID
-            ) //Loop Until we have visited every cavern or we visited the target cavern
+            // Iterate through the entire node list until we exhaust all possible options or find the target (end) node.
+            while (unvisitedNodes.Any() && visiting != nodes.Last().ID)
             {
-                visiting = FindNextNode(unvisitedNodes); //Searching the closest cavern to Target
+                // Search for closest node to the target.
+                visiting = FindNextNode(unvisitedNodes);
 
-                foreach (var connectedId in caverns[unvisitedNodes[visiting].ID].Connections.Where(connectedId => !caverns[connectedId].Visited))
+                // Iterate through the IDs in the node list, comparing the IDs to ones we haven't checked.
+                foreach (int connectedId in nodes[unvisitedNodes[visiting].ID].Connections.Where(connectedId => !nodes[connectedId].Visited))
                 {
-                    caverns[connectedId].CalcG(caverns[unvisitedNodes[visiting].ID]);
-                    caverns[connectedId].CalcH(caverns.Last().X, caverns.Last().Y);
+                    // Calculate distance between first & target nodes
+                    nodes[connectedId].CalculateDistanceFirstNode(nodes[unvisitedNodes[visiting].ID]);
+                    nodes[connectedId].CalculateDistanceTargetNode(nodes.Last().X, nodes.Last().Y);
 
-                    if (caverns[connectedId].IsInUnvisited) continue;
-                    //Adding cavern t unvisited
-                    unvisitedNodes.Add(caverns[connectedId]);
-                    //Marking the cavern as ToBeExplored - this will avoid repetition of the same cavern
-                    unvisitedNodes.Last().IsInUnvisited = true;
+                    if (nodes[connectedId].InUnvisited) continue;
+
+                    // Add the node to a list if unvisited nodes.
+                    unvisitedNodes.Add(nodes[connectedId]);
+
+                    // Mark unvisited, this avoids repetition of the same node (avoids infinite loop :D)
+                    unvisitedNodes.Last().InUnvisited = true;
                 }
 
-                //Marking the visited cavern as Visited
+                // Mark the current node as visited.
                 unvisitedNodes[visiting].Visited = true;
-                //Removing the visited cavern from the UnvisitedNodes List
-                unvisitedNodes[visiting].IsInUnvisited = false;
+
+                // Remove it from the unvisited nodes list.
+                unvisitedNodes[visiting].InUnvisited = false;
                 unvisitedNodes.RemoveAt(visiting);
             }
 
-            string route = string.Empty; //This string will store the route
-            string solutionFileName = args[0] + ".csn";
+            string route = "";
 
-            if (caverns.Last().PreviousNode != -1) //Checking if we managed to find a route to the Target Node
+            if (nodes.Last().PreviousNode != -1) // Did we find a path to the target node?
             {
-                int ind = caverns.Last().ID;
-                while (ind != -1) //ind will become -1 when we reach the Starting Node
+                int index = nodes.Last().ID;
+                while (index != -1) //ind will become -1 when we reach the Starting Node
                 {
-                    route = route.Insert(0, $"{ind + 1} -> ");
-                    ind = caverns[ind].PreviousNode;
+                    route = route.Insert(0, $"{index + 1} -> ");
+                    index = nodes[index].PreviousNode;
                 }
 
-                // Removing the last 4 characters (arrows and space)
+                // Removing the last 4 characters (arrows and spaces)
                 route = route[..^4];
             }
-            else
-                route = "0";
+            else route = "0"; // The route will be set to 0 if we cannot find a path from start to end node.
 
-            //Creating solution file
-            File.WriteAllText(solutionFileName, route);
+            // Write the resulting path to the output file.
+            File.WriteAllText(args[0] + ".csn", route);
         }
 
-        private static void CreateNodeList(string fileName, IList<Node> cavernsL)
+        /// <summary>
+        /// The method will create a node list from a file name and a list of nodes.
+        /// </summary>
+        /// <param name="fileName">The name of the file.</param>
+        /// <param name="nodes">The list of nodes </param>
+        private static void CreateNodeList(string fileName, IList<Node> nodes)
         {
-            string cavernsInformation = File.ReadAllText(fileName);
+            string node = File.ReadAllText(fileName);
 
-            string[] extracted = cavernsInformation.Split(',');
+            string[] data = node.Split(',');
 
-            //Getting Nodes Number (First Extracted Number)
-            int nNode = int.Parse(extracted[0]);
+            // Grab the first extracted number.
+            int nNode = int.Parse(data[0]);
 
-            int cIndex = 0; //Node ID
+            int nodeId = 0;
             for (int i = 1; i <= nNode * 2; i += 2)
             {
-                cavernsL.Add(new Node(cIndex, int.Parse(extracted[i]), int.Parse(extracted[i + 1])));
-                cIndex++;
+                nodes.Add(new Node(nodeId, int.Parse(data[i]), int.Parse(data[i + 1])));
+                nodeId++;
             }
 
-            //Adding Connections to the Nodes
-            int matrixI = nNode * 2 + 1; //Keeps track of the extracted values in extractedList
+            // Add some connections between nodes.
+            int matrixI = nNode * 2 + 1; // Keep track of the data in the data array
             {
-                for (int i = 0; i < nNode; i++)
+                for (int i = 0; i < nNode; i++) 
                 {
                     for (int j = 0; j < nNode; j++)
                     {
-                        if (int.Parse(extracted[matrixI]) == 1) //1 means we have a connection between two Nodes
-                            cavernsL[j].Connections.Add(Convert.ToInt32(i));
+                        // 1 refers to a connection between a pair of nodes.
+                        if (int.Parse(data[matrixI]) == 1)
+                            nodes[j].Connections.Add(Convert.ToInt32(i));
                         matrixI++;
                     }
                 }
             }
         }
 
-        private static int FindNextNode(IEnumerable<Node> unvisited)
+        /// <summary>
+        /// This method will find the next node from a given list of unvisited nodes.
+        /// </summary>
+        /// <param name="unvisited">The list of unvisited nodes</param>
+        /// <returns>An index value of the unvisited nodes.</returns>
+        private static int FindNextNode(IList<Node> unvisited)
         {
-            double minDist = double.MaxValue; //Setting Min distance to MAX VALUE            
-            int unvisitedIndex = -1; //Index in UnvisitedNodes
-            int i = 0; //Keeps track of ID
-            foreach (Node c in unvisited)
-            {
-                double f = c.G + c.H;
-                if (f < minDist)
-                {
-                    minDist = f; //Updating minDist with new value                    
-                    unvisitedIndex = i; //Index of the closest cavern in the UnvisitedNodes List
-                }
+            double minDist = double.MaxValue; // Create a minimum distance value and assign it a maximum value.          
+            int unvisitedIndex = -1;
 
-                i++;
+            for (int i = 0; i < unvisited.Count; i++)
+            {
+                Node n = unvisited[i]; // The node being indexed from the list of unvisited nodes.
+                double distance = n.DistanceFirstNode + n.DistanceTargetNode;
+
+                // Standard "inverted" standard algorithm
+                if (!(distance < minDist)) continue;
+
+                minDist = distance;
+                unvisitedIndex = i;
             }
 
             return unvisitedIndex;

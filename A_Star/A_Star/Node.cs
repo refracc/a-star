@@ -4,49 +4,62 @@ using System.Text;
 
 namespace A_Star
 {
-    class Node
+    internal class Node
     {
-        public int X { get; set; } //X Value
-        public int Y { get; set; }  //Y Value
-        public int ID { get; set; } //Cavern ID
-        public int PreviousNode { get; set; } //ID of Previous Cavern in Route
-        public List<int> Connections = new List<int>(); //List if IDs for Connected Caverns
-        public double G { get; set; } //Distance from first Cavern (Route Distance)
-        public double H { get; set; } //Distance to Target Cavers
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int ID { get; set; }
+        public int PreviousNode { get; set; }
+        public List<int> Connections = new List<int>();
+        public double DistanceFirstNode { get; set; }
+        public double DistanceTargetNode { get; set; }
         public bool Visited { get; set; }
-        public bool IsInUnvisited { get; set; }
+        public bool InUnvisited { get; set; }
 
-        //Constructor
+        // Private constructor. Cannot create an empty node.
+        private Node() { }
+
+        /// <summary>
+        /// This is a public constructor which is the only way to create a new node.
+        /// </summary>
+        /// <param name="id">This is the ID of the node.</param>
+        /// <param name="x">The x value of the node.</param>
+        /// <param name="y">The y value of the node.</param>
         public Node(int id, int x, int y)
         {
             ID = id;
             X = x;
             Y = y;
-            G = double.MaxValue;
-            H = double.MaxValue;
+            DistanceFirstNode = double.MaxValue;
+            DistanceTargetNode = double.MaxValue;
             Visited = false;
-            IsInUnvisited = false;
+            InUnvisited = false;
             PreviousNode = -1;
         }
 
-        //Calculate the StarDistance and Distance to Target
-        public void CalcG(Node node)
+        /// <summary>
+        /// Calculate a distance from the first node to another node.
+        /// </summary>
+        /// <param name="node">The target node.</param>
+        public void CalculateDistanceFirstNode(Node node)
         {
-            //Calculating the distance between this node and the previous cavern
-            double routeLength = node.G + Math.Sqrt(Math.Pow(X - node.X, 2) + Math.Pow(Y - node.Y, 2));
+            //Calculating the distance between this node and the previous node
+            double routeLength = node.DistanceFirstNode + Math.Pow(Math.Pow(X - node.X, 2) + Math.Pow(Y - node.Y, 2), 0.5);
 
-            //If routeLength is < than StartDistance we have found a shorter route. We update the information for this Cavern
-            if (routeLength < G)
+            // Update the path for the algorithm if we find a shorter one.
+            // Also, another finding minimum standard algorithm :)
+            if (routeLength < DistanceFirstNode)
             {
-                G = routeLength;
+                DistanceFirstNode = routeLength;
                 PreviousNode = node.ID;
             }
         }
 
-        //Calculating this cavern distance to target node. [Unfortunately this is calculated every time] :(
-        public void CalcH(int tX, int tY)
+        // Calculate a node distance to target node.
+        // Sadly, this is calculated every time (for now) :>
+        public void CalculateDistanceTargetNode(int tX, int tY)
         {
-            H = Math.Sqrt(Math.Pow(tX - X, 2) + Math.Pow(tY - Y, 2));
+            DistanceTargetNode = Math.Pow(Math.Pow(tX - X, 2) + Math.Pow(tY - Y, 2), 0.5);
         }
     }
 }
