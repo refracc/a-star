@@ -5,9 +5,9 @@ using System.Linq;
 
 namespace A_Star
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             //Creating the list of Nodes
             List<Node> caverns = new List<Node>();
@@ -34,21 +34,16 @@ namespace A_Star
             {
                 visiting = FindNextNode(unvisitedNodes); //Searching the closest cavern to Target
 
-                foreach (int connectedId in caverns[unvisitedNodes[visiting].ID].Connections)
+                foreach (var connectedId in caverns[unvisitedNodes[visiting].ID].Connections.Where(connectedId => !caverns[connectedId].Visited))
                 {
-                    if (!caverns[connectedId].Visited)
-                    {
-                        caverns[connectedId].CalcG(caverns[unvisitedNodes[visiting].ID]);
-                        caverns[connectedId].CalcH(caverns.Last().X, caverns.Last().Y);
+                    caverns[connectedId].CalcG(caverns[unvisitedNodes[visiting].ID]);
+                    caverns[connectedId].CalcH(caverns.Last().X, caverns.Last().Y);
 
-                        if (!caverns[connectedId].IsInUnvisited)
-                        {
-                            //Adding cavern t unvisited
-                            unvisitedNodes.Add(caverns[connectedId]);
-                            //Marking the cavern as ToBeExplored - this will avoid repetition of the same cavern
-                            unvisitedNodes.Last().IsInUnvisited = true;
-                        }
-                    }
+                    if (caverns[connectedId].IsInUnvisited) continue;
+                    //Adding cavern t unvisited
+                    unvisitedNodes.Add(caverns[connectedId]);
+                    //Marking the cavern as ToBeExplored - this will avoid repetition of the same cavern
+                    unvisitedNodes.Last().IsInUnvisited = true;
                 }
 
                 //Marking the visited cavern as Visited
@@ -66,18 +61,21 @@ namespace A_Star
                 int ind = caverns.Last().ID;
                 while (ind != -1) //ind will become -1 when we reach the Starting Node
                 {
-                    route = route.Insert(0, $"{(ind + 1).ToString()} ");
+                    route = route.Insert(0, $"{ind + 1} -> ");
                     ind = caverns[ind].PreviousNode;
                 }
+
+                // Removing the last 4 characters (arrows and space)
+                route = route[..^4];
             }
             else
                 route = "0";
 
-            //Creating SOLUTION file
+            //Creating solution file
             File.WriteAllText(solutionFileName, route);
         }
 
-        public static void CreateNodeList(string fileName, List<Node> cavernsL)
+        private static void CreateNodeList(string fileName, IList<Node> cavernsL)
         {
             string cavernsInformation = File.ReadAllText(fileName);
 
@@ -108,7 +106,7 @@ namespace A_Star
             }
         }
 
-        public static int FindNextNode(List<Node> unvisited)
+        private static int FindNextNode(IEnumerable<Node> unvisited)
         {
             double minDist = double.MaxValue; //Setting Min distance to MAX VALUE            
             int unvisitedIndex = -1; //Index in UnvisitedNodes
