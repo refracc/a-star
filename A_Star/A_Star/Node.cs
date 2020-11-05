@@ -16,7 +16,6 @@ namespace A_Star
         public bool Visited { get; set; }
         public bool InUnvisited { get; set; }
 
-        // Private constructor. Cannot create an empty node.
         private Node() { }
 
         /// <summary>
@@ -38,28 +37,26 @@ namespace A_Star
         }
 
         /// <summary>
-        /// Calculate a distance from the first node to another node.
+        /// Calculate a distance from this node to another node.
         /// </summary>
         /// <param name="node">The target node.</param>
-        public void CalculateDistanceFirstNode(Node node)
+        public void CalculateDistanceToNode(Node node)
         {
-            // Calculating the distance between this node and the previous node
-            double routeLength = node.DistanceFirstNode + Math.Pow(Math.Pow(X - node.X, 2) + Math.Pow(Y - node.Y, 2), 0.5);
+            double route = node.DistanceFirstNode + Math.Pow(Math.Pow(X - node.X, 2) + Math.Pow(Y - node.Y, 2), 0.5);
 
-            // Update the path for the algorithm if we find a shorter one.
-            // Also, another finding minimum standard algorithm :)
-            if (routeLength < DistanceFirstNode)
-            {
-                DistanceFirstNode = routeLength;
-                PreviousNode = node.ID;
-            }
+            if (!(route < DistanceFirstNode)) return;
+            DistanceFirstNode = route;
+            PreviousNode = node.ID;
         }
 
-        // Calculate a node distance to target node.
-        // Sadly, this is calculated every time (for now) :>
-        public void CalculateDistanceTargetNode(int tX, int tY)
+        /// <summary>
+        /// Calculate the distance from the current node to a location.
+        /// </summary>
+        /// <param name="x">The X co-ordinate.</param>
+        /// <param name="y">The Y co-ordinate.</param>
+        public void CalculateDistanceToLocation(int x, int y)
         {
-            DistanceTargetNode = Math.Pow(Math.Pow(tX - X, 2) + Math.Pow(tY - Y, 2), 0.5);
+            DistanceTargetNode = Math.Pow(Math.Pow(x - X, 2) + Math.Pow(y - Y, 2), 0.5);
         }
     }
 }
