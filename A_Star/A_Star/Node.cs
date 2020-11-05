@@ -42,6 +42,7 @@ namespace A_Star
         /// <param name="node">The target node.</param>
         public void CalculateDistanceToNode(Node node)
         {
+            // Calculate route cost using Euclidean Distance
             double route = node.DistanceFirstNode + Math.Pow(Math.Pow(X - node.X, 2) + Math.Pow(Y - node.Y, 2), 0.5);
 
             if (!(route < DistanceFirstNode)) return;
@@ -51,11 +52,14 @@ namespace A_Star
 
         /// <summary>
         /// Calculate the distance from the current node to a location.
+        /// This unfortunately has to be calculated every time we compare a new node :(
+        /// and there is nothing we can do about it *plays sad violin*
         /// </summary>
         /// <param name="x">The X co-ordinate.</param>
         /// <param name="y">The Y co-ordinate.</param>
         public void CalculateDistanceToLocation(int x, int y)
         {
+            // Calculate cost using Euclidean Distance
             DistanceTargetNode = Math.Pow(Math.Pow(x - X, 2) + Math.Pow(y - Y, 2), 0.5);
         }
     }

@@ -15,33 +15,40 @@ namespace A_Star
         {
             List<Node> nodes = new List<Node>();
             CreateNodeList($"{args[0]}.cav", nodes);
-            List<Node> unvisitedNodes = new List<Node> { nodes[0] };
+            List<Node> unvisited = new List<Node> { nodes[0] };
 
-            unvisitedNodes[0].DistanceFirstNode = 0;
-            nodes.First().CalculateDistanceToLocation(nodes.Last().X, nodes.Last().Y);
+            // Set the first unvisited node's distance to 0
+            unvisited[0].DistanceFirstNode = 0;
+            nodes.First().CalculateDistanceToLocation(nodes.Last().X, nodes.Last().Y); // Calculate the first node's distance to the last node
             int visiting = 0;
 
-            while (unvisitedNodes.Any() && visiting != nodes.Last().ID)
+            // Iterate over the unvisited nodes, ensure the visiting number isn't also the last node's ID
+            while (unvisited.Any() && visiting != nodes.Last().ID)
             {
-                visiting = FindNextNode(unvisitedNodes);
+                visiting = FindNextNode(unvisited); // Visiting node ID is the next node in this list.
 
-                foreach (int connected in nodes[unvisitedNodes[visiting].ID].Connections.Where(connected => !nodes[connected].Visited))
+                // Iterate over all node connections where the node we are in hasn't been visited.
+                foreach (int connected in nodes[unvisited[visiting].ID].Connections.Where(connected => !nodes[connected].Visited))
                 {
-                    nodes[connected].CalculateDistanceToNode(nodes[unvisitedNodes[visiting].ID]);
+                    // Calculate the distances to the currently visiting unvisited node and location of the end objective.
+                    nodes[connected].CalculateDistanceToNode(nodes[unvisited[visiting].ID]);
                     nodes[connected].CalculateDistanceToLocation(nodes.Last().X, nodes.Last().Y);
 
+                    // Add the node to the unvisited list & set the last node's InUnvisited state to true.
                     if (nodes[connected].InUnvisited) continue;
-                    unvisitedNodes.Add(nodes[connected]);
-                    unvisitedNodes.Last().InUnvisited = true;
+                    unvisited.Add(nodes[connected]);
+                    unvisited.Last().InUnvisited = true;
                 }
 
-                unvisitedNodes[visiting].Visited = true;
-                unvisitedNodes[visiting].InUnvisited = false;
-                unvisitedNodes.RemoveAt(visiting);
+                // Set the visited flag to true and unset the unvisited flag.
+                unvisited[visiting].Visited = true;
+                unvisited[visiting].InUnvisited = false;
+                unvisited.RemoveAt(visiting);
             }
 
             string route = "";
 
+            // Check we have a valid path created.
             if (nodes.Last().PreviousNode != -1)
             {
                 int index = nodes.Last().ID;
@@ -50,11 +57,12 @@ namespace A_Star
                     route = route.Insert(0, $"{index + 1} ");
                     index = nodes[index].PreviousNode;
                 }
-                route = route[..^1];
+                route = route[..^1]; // Remove the last trailing character
             }
             else route = "0";
 
-            File.WriteAllText($"{args[0]}.csn", route);
+            // Write the text to a file.
+            File.WriteAllText($"{args[0]}.csn", route); 
         }
 
         /// <summary>
@@ -69,20 +77,21 @@ namespace A_Star
             int node = int.Parse(data[0]);
             int id = 0;
 
+            // Add the node to the list of nodes.
             for (int i = 1; i <= node * 2; i += 2)
             {
                 nodes.Add(new Node(id, int.Parse(data[i]), int.Parse(data[i + 1])));
                 id++;
             }
 
-            int matrix = node * 2 + 1;
+            int matrix = node * 2 + 1; // Keep up with the data being iterated over in the for loop
 
+            // Retrieve node j and add connection ID i
             for (int i = 0; i < node; i++) 
             {
                 for (int j = 0; j < node; j++)
                 {
-                    if (int.Parse(data[matrix]) == 1)
-                        nodes[j].Connections.Add(Convert.ToInt32(i));
+                    if (int.Parse(data[matrix]) == 1) nodes[j].Connections.Add(Convert.ToInt32(i));
                     matrix++;
                 }
             }
@@ -98,11 +107,13 @@ namespace A_Star
             double minimumDistance = double.MaxValue;         
             int index = -1;
 
+            // Iterate over the unvisited nodes
             for (int i = 0; i < unvisited.Count; i++)
             {
                 Node n = unvisited[i];
                 double distance = n.DistanceFirstNode + n.DistanceTargetNode;
 
+                // Inverted finding minimum standard algorithm :D
                 if (!(distance < minimumDistance)) continue;
                 minimumDistance = distance;
                 index = i;
